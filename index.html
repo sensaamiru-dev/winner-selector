@@ -1,717 +1,399 @@
 <!DOCTYPE html>
-<html lang="en">
+<html lang="dv" dir="rtl">
 <head>
-    <meta charset="UTF-8">
-    <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>🎰 Random Winner Selector Pro</title>
-    <script src="https://cdn.tailwindcss.com"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/canvas-confetti/1.6.0/confetti.browser.min.js"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Space+Grotesk:wght@300;400;600;700&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
-    <style>
-        body {
-            font-family: 'Inter', sans-serif;
-            background: linear-gradient(135deg, #0f172a 0%, #1e293b 100%);
-            min-height: 100vh;
-        }
-        
-        .display-font {
-            font-family: 'Space Grotesk', sans-serif;
-        }
-        
-        /* Slot Machine Animation */
-        @keyframes slotSpin {
-            0% { transform: translateY(-100%); opacity: 0; }
-            50% { transform: translateY(0%); opacity: 1; }
-            100% { transform: translateY(100%); opacity: 0; }
-        }
-        
-        .slot-item {
-            animation: slotSpin 0.1s linear;
-        }
-        
-        /* Glow Effects */
-        .glow-winner {
-            box-shadow: 0 0 60px rgba(234, 179, 8, 0.6), 0 0 100px rgba(234, 179, 8, 0.3);
-            animation: pulse-glow 2s ease-in-out infinite;
-        }
-        
-        @keyframes pulse-glow {
-            0%, 100% { box-shadow: 0 0 60px rgba(234, 179, 8, 0.6), 0 0 100px rgba(234, 179, 8, 0.3); }
-            50% { box-shadow: 0 0 80px rgba(234, 179, 8, 0.8), 0 0 120px rgba(234, 179, 8, 0.5); }
-        }
-        
-        /* Glassmorphism */
-        .glass {
-            background: rgba(255, 255, 255, 0.05);
-            backdrop-filter: blur(10px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        .glass-panel {
-            background: rgba(15, 23, 42, 0.8);
-            backdrop-filter: blur(20px);
-            border: 1px solid rgba(255, 255, 255, 0.1);
-        }
-        
-        /* Custom Scrollbar */
-        ::-webkit-scrollbar {
-            width: 8px;
-        }
-        ::-webkit-scrollbar-track {
-            background: rgba(255,255,255,0.05);
-        }
-        ::-webkit-scrollbar-thumb {
-            background: rgba(255,255,255,0.2);
-            border-radius: 4px;
-        }
-        
-        /* Button Press Effect */
-        .btn-press:active {
-            transform: scale(0.95);
-        }
-        
-        /* Floating Animation */
-        @keyframes float {
-            0%, 100% { transform: translateY(0px); }
-            50% { transform: translateY(-10px); }
-        }
-        .floating {
-            animation: float 3s ease-in-out infinite;
-        }
-        
-        /* Shimmer Effect */
-        .shimmer {
-            background: linear-gradient(90deg, transparent, rgba(255,255,255,0.1), transparent);
-            background-size: 200% 100%;
-            animation: shimmer 2s infinite;
-        }
-        @keyframes shimmer {
-            0% { background-position: -200% 0; }
-            100% { background-position: 200% 0; }
-        }
-    </style>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+
+<title>ރެންޑަމް ވިނަރ ސިލެކްޓަރ</title>
+
+<link href="https://fonts.googleapis.com/css2?family=Faruma&display=swap" rel="stylesheet">
+
+<link rel="stylesheet"
+href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.0/css/all.min.css">
+
+<script src="https://cdn.jsdelivr.net/npm/xlsx/dist/xlsx.full.min.js"></script>
+
+<script src="https://cdn.jsdelivr.net/npm/winwheel@2.7.0/Winwheel.min.js"></script>
+
+<style>
+
+body{
+font-family:'Faruma',sans-serif;
+background:#0f172a;
+color:white;
+margin:0;
+}
+
+.light{
+background:#f4f4f4;
+color:#111;
+}
+
+header{
+display:flex;
+justify-content:space-between;
+align-items:center;
+padding:10px 20px;
+background:#1e293b;
+}
+
+.container{
+max-width:900px;
+margin:auto;
+padding:20px;
+}
+
+.card{
+background:#1e293b;
+padding:20px;
+border-radius:12px;
+margin-bottom:20px;
+}
+
+button{
+background:#3b82f6;
+border:none;
+padding:10px 16px;
+color:white;
+border-radius:8px;
+cursor:pointer;
+}
+
+button:hover{
+opacity:.9;
+}
+
+input,textarea{
+width:100%;
+padding:10px;
+border-radius:6px;
+border:none;
+margin-top:5px;
+}
+
+.participant{
+padding:6px;
+border-bottom:1px solid #444;
+}
+
+#wheelCanvas{
+margin:auto;
+display:block;
+}
+
+</style>
 </head>
-<body class="text-white overflow-x-hidden">
 
-    <!-- Header -->
-    <header class="fixed top-0 w-full z-50 glass-panel border-b border-white/10">
-        <div class="max-w-7xl mx-auto px-4 py-4 flex justify-between items-center">
-            <div class="flex items-center gap-3">
-                <div class="w-10 h-10 bg-gradient-to-br from-yellow-400 to-orange-500 rounded-xl flex items-center justify-center text-2xl shadow-lg">
-                    🎰
-                </div>
-                <div>
-                    <h1 class="display-font text-xl font-bold bg-gradient-to-r from-yellow-400 to-orange-400 bg-clip-text text-transparent">
-                        Winner Selector Pro
-                    </h1>
-                    <p class="text-xs text-gray-400">Automatic Random Draw System</p>
-                </div>
-            </div>
-            <div class="flex gap-3">
-                <button onclick="resetAll()" class="px-4 py-2 rounded-lg bg-red-500/20 text-red-400 hover:bg-red-500/30 transition-all text-sm font-medium border border-red-500/30">
-                    Reset All
-                </button>
-            </div>
-        </div>
-    </header>
+<body>
 
-    <!-- Main Content -->
-    <main class="pt-24 pb-12 px-4 max-w-7xl mx-auto">
-        
-        <!-- Hero Section -->
-        <div class="text-center mb-12 floating">
-            <h2 class="display-font text-5xl md:text-7xl font-bold mb-4 bg-gradient-to-r from-white via-yellow-200 to-yellow-400 bg-clip-text text-transparent">
-                Who's the Lucky One?
-            </h2>
-            <p class="text-gray-400 text-lg max-w-2xl mx-auto">
-                Upload your participant list and let the algorithm randomly select a winner with cinematic animation.
-            </p>
-        </div>
+<header>
 
-        <div class="grid lg:grid-cols-3 gap-8">
-            
-            <!-- Left Panel: Controls & Data -->
-            <div class="lg:col-span-1 space-y-6">
-                
-                <!-- Upload Section -->
-                <div class="glass rounded-2xl p-6 space-y-4">
-                    <h3 class="display-font text-xl font-semibold flex items-center gap-2">
-                        <span class="text-2xl">📁</span> Data Input
-                    </h3>
-                    
-                    <div class="relative group">
-                        <input type="file" id="fileInput" accept=".csv,.txt,.xlsx,.xls" 
-                               class="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                               onchange="handleFileUpload(event)">
-                        <div class="border-2 border-dashed border-white/20 rounded-xl p-8 text-center group-hover:border-yellow-400/50 transition-all bg-white/5 group-hover:bg-white/10">
-                            <div class="text-4xl mb-2">📥</div>
-                            <p class="text-sm text-gray-300 font-medium">Drop file or click to upload</p>
-                            <p class="text-xs text-gray-500 mt-1">Supports CSV, TXT, Excel</p>
-                        </div>
-                    </div>
+<div style="display:flex;align-items:center;gap:10px">
 
-                    <div class="flex gap-2">
-                        <button onclick="loadSampleData()" class="flex-1 py-2 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-sm border border-white/10">
-                            Load Sample
-                        </button>
-                        <button onclick="document.getElementById('manualInput').classList.toggle('hidden')" class="flex-1 py-2 px-4 rounded-lg bg-white/10 hover:bg-white/20 transition-all text-sm border border-white/10">
-                            Manual Entry
-                        </button>
-                    </div>
+<img id="logo" src="" style="height:40px">
 
-                    <!-- Manual Input -->
-                    <div id="manualInput" class="hidden space-y-2">
-                        <textarea id="manualText" rows="4" placeholder="Enter names separated by commas or new lines..." 
-                                  class="w-full bg-black/30 border border-white/20 rounded-lg p-3 text-sm focus:outline-none focus:border-yellow-400/50 resize-none"></textarea>
-                        <button onclick="processManualInput()" class="w-full py-2 bg-yellow-500/20 text-yellow-400 rounded-lg hover:bg-yellow-500/30 transition-all text-sm font-medium border border-yellow-500/30">
-                            Add Participants
-                        </button>
-                    </div>
-                </div>
+<input type="file" id="logoUpload" hidden>
 
-                <!-- Statistics -->
-                <div class="glass rounded-2xl p-6 space-y-4">
-                    <h3 class="display-font text-xl font-semibold flex items-center gap-2">
-                        <span class="text-2xl">📊</span> Statistics
-                    </h3>
-                    <div class="grid grid-cols-2 gap-4">
-                        <div class="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-                            <div id="totalCount" class="text-3xl font-bold text-yellow-400 display-font">0</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Total</div>
-                        </div>
-                        <div class="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-                            <div id="remainingCount" class="text-3xl font-bold text-green-400 display-font">0</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Remaining</div>
-                        </div>
-                        <div class="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-                            <div id="selectedCount" class="text-3xl font-bold text-blue-400 display-font">0</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Selected</div>
-                        </div>
-                        <div class="bg-white/5 rounded-xl p-4 text-center border border-white/10">
-                            <div id="eliminatedCount" class="text-3xl font-bold text-red-400 display-font">0</div>
-                            <div class="text-xs text-gray-400 uppercase tracking-wider mt-1">Eliminated</div>
-                        </div>
-                    </div>
-                </div>
+<label for="logoUpload">
+<i class="fa-solid fa-image"></i>
+</label>
 
-                <!-- Settings -->
-                <div class="glass rounded-2xl p-6 space-y-4">
-                    <h3 class="display-font text-xl font-semibold flex items-center gap-2">
-                        <span class="text-2xl">⚙️</span> Settings
-                    </h3>
-                    <div class="space-y-3">
-                        <label class="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-all">
-                            <span class="text-sm">Remove winner from pool</span>
-                            <input type="checkbox" id="removeWinner" checked class="w-4 h-4 accent-yellow-400 rounded">
-                        </label>
-                        <label class="flex items-center justify-between p-3 bg-white/5 rounded-lg cursor-pointer hover:bg-white/10 transition-all">
-                            <span class="text-sm">Show animation</span>
-                            <input type="checkbox" id="showAnimation" checked class="w-4 h-4 accent-yellow-400 rounded">
-                        </label>
-                        <div class="space-y-2">
-                            <label class="text-xs text-gray-400">Animation Speed</label>
-                            <input type="range" id="speedRange" min="50" max="500" value="100" class="w-full accent-yellow-400">
-                            <div class="flex justify-between text-xs text-gray-500">
-                                <span>Fast</span>
-                                <span>Slow</span>
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            </div>
+<h3>ވިނަރ ސިލެކްޓަރ</h3>
 
-            <!-- Center: The Stage -->
-            <div class="lg:col-span-2 space-y-6">
-                
-                <!-- Winner Display -->
-                <div class="relative h-96 rounded-3xl overflow-hidden bg-gradient-to-br from-slate-800 to-slate-900 border border-white/10 shadow-2xl">
-                    <!-- Background Effects -->
-                    <div class="absolute inset-0 opacity-30">
-                        <div class="absolute top-0 left-0 w-full h-full bg-[radial-gradient(circle_at_50%_50%,rgba(234,179,8,0.15),transparent_70%)]"></div>
-                    </div>
-                    
-                    <!-- Grid Pattern -->
-                    <div class="absolute inset-0 opacity-10" style="background-image: radial-gradient(circle at 1px 1px, white 1px, transparent 0); background-size: 40px 40px;"></div>
-                    
-                    <!-- Main Display Area -->
-                    <div class="relative z-10 h-full flex flex-col items-center justify-center p-8">
-                        <div id="winnerDisplay" class="text-center w-full max-w-2xl">
-                            <div id="statusText" class="text-gray-400 text-sm uppercase tracking-widest mb-4 font-medium">Ready to Select</div>
-                            <div id="winnerName" class="display-font text-6xl md:text-8xl font-bold text-white mb-4 min-h-[1.2em] transition-all duration-300">
-                                ???
-                            </div>
-                            <div id="winnerInfo" class="text-gray-400 text-lg opacity-0 transition-opacity duration-500">
-                                Press the button below to start
-                            </div>
-                        </div>
-                    </div>
+</div>
 
-                    <!-- Decorative Elements -->
-                    <div class="absolute top-4 left-4 w-20 h-20 border-l-2 border-t-2 border-yellow-400/30 rounded-tl-3xl"></div>
-                    <div class="absolute top-4 right-4 w-20 h-20 border-r-2 border-t-2 border-yellow-400/30 rounded-tr-3xl"></div>
-                    <div class="absolute bottom-4 left-4 w-20 h-20 border-l-2 border-b-2 border-yellow-400/30 rounded-bl-3xl"></div>
-                    <div class="absolute bottom-4 right-4 w-20 h-20 border-r-2 border-b-2 border-yellow-400/30 rounded-br-3xl"></div>
-                </div>
+<div>
 
-                <!-- Action Button -->
-                <button id="selectBtn" onclick="startSelection()" class="w-full py-6 rounded-2xl bg-gradient-to-r from-yellow-400 via-yellow-500 to-orange-500 text-slate-900 font-bold text-2xl display-font shadow-lg shadow-yellow-500/25 hover:shadow-yellow-500/40 transform transition-all btn-press disabled:opacity-50 disabled:cursor-not-allowed relative overflow-hidden group">
-                    <div class="absolute inset-0 shimmer opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span class="relative z-10 flex items-center justify-center gap-3">
-                        <span class="text-3xl">🎲</span>
-                        <span id="btnText">SELECT WINNER</span>
-                    </span>
-                </button>
+<button onclick="toggleTheme()">
+<i class="fa-solid fa-moon"></i>
+</button>
 
-                <!-- Participants List -->
-                <div class="glass rounded-2xl p-6">
-                    <div class="flex justify-between items-center mb-4">
-                        <h3 class="display-font text-xl font-semibold flex items-center gap-2">
-                            <span class="text-2xl">👥</span> Participants 
-                            <span id="listBadge" class="px-2 py-1 bg-white/10 rounded-full text-xs">0</span>
-                        </h3>
-                        <div class="flex gap-2">
-                            <button onclick="filterList('all')" class="px-3 py-1 rounded-full bg-white/10 text-xs hover:bg-white/20 transition-all active-filter" data-filter="all">All</button>
-                            <button onclick="filterList('remaining')" class="px-3 py-1 rounded-full bg-white/10 text-xs hover:bg-white/20 transition-all" data-filter="remaining">Remaining</button>
-                            <button onclick="filterList('winners')" class="px-3 py-1 rounded-full bg-white/10 text-xs hover:bg-white/20 transition-all" data-filter="winners">Winners</button>
-                        </div>
-                    </div>
-                    
-                    <div id="participantsList" class="grid grid-cols-2 md:grid-cols-3 gap-3 max-h-64 overflow-y-auto p-2">
-                        <div class="col-span-full text-center py-8 text-gray-500 text-sm">
-                            No participants loaded yet. Upload a file or enter names manually.
-                        </div>
-                    </div>
-                </div>
+<button onclick="adminLogin()">
+<i class="fa-solid fa-lock"></i>
+</button>
 
-                <!-- Winners History -->
-                <div class="glass rounded-2xl p-6">
-                    <h3 class="display-font text-xl font-semibold mb-4 flex items-center gap-2">
-                        <span class="text-2xl">🏆</span> Winners History
-                    </h3>
-                    <div id="winnersHistory" class="space-y-2 max-h-48 overflow-y-auto">
-                        <div class="text-center py-4 text-gray-500 text-sm italic">No winners selected yet</div>
-                    </div>
-                </div>
-            </div>
-        </div>
-    </main>
+</div>
 
-    <script>
-        // State Management
-        let participants = [];
-        let winners = [];
-        let eliminated = [];
-        let isSpinning = false;
-        let currentFilter = 'all';
+</header>
 
-        // Initialize
-        document.addEventListener('DOMContentLoaded', () => {
-            updateStats();
-        });
+<div class="container">
 
-        // File Upload Handler
-        function handleFileUpload(event) {
-            const file = event.target.files[0];
-            if (!file) return;
+<div class="card">
 
-            const reader = new FileReader();
-            const extension = file.name.split('.').pop().toLowerCase();
+<h3><i class="fa-solid fa-upload"></i> ފައިލް އަޕްލޯޑް</h3>
 
-            reader.onload = function(e) {
-                const content = e.target.result;
-                let names = [];
+<input type="file" id="fileInput">
 
-                if (extension === 'csv' || extension === 'txt') {
-                    // Parse CSV or TXT
-                    names = content.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
-                } else if (extension === 'xlsx' || extension === 'xls') {
-                    // For Excel files, we'd need a library like SheetJS, but for now treat as text
-                    alert('For Excel files, please save as CSV first, or paste data manually.');
-                    return;
-                }
+</div>
 
-                addParticipants(names);
-                showNotification(`Loaded ${names.length} participants from ${file.name}`);
-            };
+<div class="card">
 
-            reader.readAsText(file);
-        }
+<h3><i class="fa-solid fa-keyboard"></i> މެނުއަލް އެންޓްރީ</h3>
 
-        // Sample Data
-        function loadSampleData() {
-            const sampleNames = [
-                "Alice Johnson", "Bob Smith", "Charlie Brown", "Diana Prince", 
-                "Ethan Hunt", "Fiona Gallagher", "George Martin", "Hannah Montana",
-                "Ian Malcolm", "Julia Roberts", "Kevin Hart", "Laura Croft",
-                "Michael Scott", "Nancy Wheeler", "Oscar Martinez", "Pam Beesly",
-                "Quentin Tarantino", "Rachel Green", "Steve Rogers", "Tony Stark"
-            ];
-            addParticipants(sampleNames);
-            showNotification('Sample data loaded: 20 participants');
-        }
+<textarea id="manual"></textarea>
 
-        // Manual Input
-        function processManualInput() {
-            const text = document.getElementById('manualText').value;
-            if (!text.trim()) return;
-            
-            const names = text.split(/[\n,]+/).map(n => n.trim()).filter(n => n.length > 0);
-            addParticipants(names);
-            document.getElementById('manualText').value = '';
-            document.getElementById('manualInput').classList.add('hidden');
-            showNotification(`Added ${names.length} participants`);
-        }
+<button onclick="addManual()">އެޑް</button>
 
-        // Add Participants
-        function addParticipants(names) {
-            const newParticipants = names.map((name, index) => ({
-                id: Date.now() + index,
-                name: name,
-                status: 'remaining', // remaining, winner, eliminated
-                timestamp: null
-            }));
-            
-            participants = [...participants, ...newParticipants];
-            updateDisplay();
-            updateStats();
-        }
+</div>
 
-        // Update Statistics
-        function updateStats() {
-            const total = participants.length;
-            const remaining = participants.filter(p => p.status === 'remaining').length;
-            const selected = participants.filter(p => p.status === 'winner').length;
-            const eliminated = participants.filter(p => p.status === 'eliminated').length;
+<div class="card">
 
-            // Animate numbers
-            animateNumber('totalCount', total);
-            animateNumber('remainingCount', remaining);
-            animateNumber('selectedCount', selected);
-            animateNumber('eliminatedCount', eliminated);
-            
-            document.getElementById('listBadge').textContent = total;
-            
-            // Enable/disable button
-            const btn = document.getElementById('selectBtn');
-            if (remaining === 0 && total > 0) {
-                btn.disabled = true;
-                btn.innerHTML = '<span class="text-xl">✅</span> All Selected';
-                btn.classList.add('opacity-50');
-            } else {
-                btn.disabled = false;
-                btn.innerHTML = `
-                    <div class="absolute inset-0 shimmer opacity-0 group-hover:opacity-100 transition-opacity"></div>
-                    <span class="relative z-10 flex items-center justify-center gap-3">
-                        <span class="text-3xl">🎲</span>
-                        <span id="btnText">SELECT WINNER</span>
-                    </span>
-                `;
-                btn.classList.remove('opacity-50');
-            }
-        }
+<h3><i class="fa-solid fa-search"></i> ސާޗް</h3>
 
-        function animateNumber(id, value) {
-            const el = document.getElementById(id);
-            const current = parseInt(el.textContent);
-            if (current === value) return;
-            
-            el.textContent = value;
-            el.classList.add('scale-125');
-            setTimeout(() => el.classList.remove('scale-125'), 200);
-        }
+<input type="text" id="search" onkeyup="searchParticipants()">
 
-        // The Main Selection Logic
-        async function startSelection() {
-            if (isSpinning) return;
-            
-            const remaining = participants.filter(p => p.status === 'remaining');
-            if (remaining.length === 0) {
-                showNotification('No participants remaining!', 'error');
-                return;
-            }
+</div>
 
-            isSpinning = true;
-            const btn = document.getElementById('selectBtn');
-            const display = document.getElementById('winnerName');
-            const status = document.getElementById('statusText');
-            const info = document.getElementById('winnerInfo');
-            
-            btn.disabled = true;
-            status.textContent = 'Selecting...';
-            info.style.opacity = '0';
-            display.classList.remove('glow-winner', 'text-yellow-400');
-            display.classList.add('text-white');
+<div class="card">
 
-            const showAnimation = document.getElementById('showAnimation').checked;
-            const speed = parseInt(document.getElementById('speedRange').value);
-            
-            let winner;
-            
-            if (showAnimation && remaining.length > 1) {
-                // Animation sequence
-                const duration = 3000; // 3 seconds
-                const startTime = Date.now();
-                let lastUpdate = 0;
-                
-                // Shuffle animation
-                while (Date.now() - startTime < duration) {
-                    if (Date.now() - lastUpdate > speed) {
-                        const random = remaining[Math.floor(Math.random() * remaining.length)];
-                        display.textContent = random.name;
-                        display.style.transform = `scale(${0.9 + Math.random() * 0.2})`;
-                        lastUpdate = Date.now();
-                    }
-                    await new Promise(r => requestAnimationFrame(r));
-                }
-                
-                // Final selection
-                winner = remaining[Math.floor(Math.random() * remaining.length)];
-                display.textContent = winner.name;
-                display.style.transform = 'scale(1)';
-            } else {
-                // Instant selection
-                winner = remaining[Math.floor(Math.random() * remaining.length)];
-                display.textContent = winner.name;
-            }
+<h3><i class="fa-solid fa-users"></i> ޕާޓިސިޕަންޓްސް</h3>
 
-            // Winner announcement
-            winner.status = 'winner';
-            winner.timestamp = new Date().toLocaleString();
-            
-            if (document.getElementById('removeWinner').checked) {
-                winner.status = 'eliminated'; // Actually eliminate if checked
-            }
-            
-            display.classList.remove('text-white');
-            display.classList.add('text-yellow-400', 'glow-winner');
-            status.textContent = '🎉 WINNER SELECTED 🎉';
-            info.textContent = `Selected at ${winner.timestamp}`;
-            info.style.opacity = '1';
-            
-            // Confetti explosion
-            triggerConfetti();
-            
-            // Add to history
-            addToHistory(winner);
-            
-            // Update displays
-            updateDisplay();
-            updateStats();
-            
-            // Reset button
-            isSpinning = false;
-            btn.disabled = false;
-            
-            showNotification(`Winner: ${winner.name}!`);
-        }
+<div id="participants"></div>
 
-        function triggerConfetti() {
-            const duration = 3000;
-            const end = Date.now() + duration;
+</div>
 
-            (function frame() {
-                confetti({
-                    particleCount: 5,
-                    angle: 60,
-                    spread: 55,
-                    origin: { x: 0 },
-                    colors: ['#fbbf24', '#f59e0b', '#fcd34d']
-                });
-                confetti({
-                    particleCount: 5,
-                    angle: 120,
-                    spread: 55,
-                    origin: { x: 1 },
-                    colors: ['#fbbf24', '#f59e0b', '#fcd34d']
-                });
-                
-                if (Date.now() < end) {
-                    requestAnimationFrame(frame);
-                }
-            }());
-            
-            // Big burst in center
-            setTimeout(() => {
-                confetti({
-                    particleCount: 100,
-                    spread: 70,
-                    origin: { y: 0.6 },
-                    colors: ['#fbbf24', '#f59e0b', '#fcd34d', '#ffffff']
-                });
-            }, 100);
-        }
+<div class="card">
 
-        function addToHistory(winner) {
-            const history = document.getElementById('winnersHistory');
-            if (winners.length === 0) {
-                history.innerHTML = '';
-            }
-            
-            winners.unshift(winner);
-            
-            const item = document.createElement('div');
-            item.className = 'flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all';
-            item.innerHTML = `
-                <div class="flex items-center gap-3">
-                    <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-slate-900 font-bold text-xs">
-                        ${winners.length}
-                    </div>
-                    <div>
-                        <div class="font-semibold text-white">${winner.name}</div>
-                        <div class="text-xs text-gray-400">${winner.timestamp}</div>
-                    </div>
-                </div>
-                <button onclick="removeWinner(${winner.id})" class="text-red-400 hover:text-red-300 p-2">
-                    ×
-                </button>
-            `;
-            
-            history.insertBefore(item, history.firstChild);
-        }
+<h3><i class="fa-solid fa-dharmachakra"></i> ސްޕިން ވީލް</h3>
 
-        function removeWinner(id) {
-            const winner = participants.find(p => p.id === id);
-            if (winner) {
-                winner.status = 'remaining';
-                winner.timestamp = null;
-                winners = winners.filter(w => w.id !== id);
-                updateDisplay();
-                updateStats();
-                refreshHistory();
-            }
-        }
+<canvas id="wheelCanvas" width="400" height="400"></canvas>
 
-        function refreshHistory() {
-            const history = document.getElementById('winnersHistory');
-            if (winners.length === 0) {
-                history.innerHTML = '<div class="text-center py-4 text-gray-500 text-sm italic">No winners selected yet</div>';
-                return;
-            }
-            
-            history.innerHTML = '';
-            winners.forEach((winner, index) => {
-                const item = document.createElement('div');
-                item.className = 'flex items-center justify-between p-3 bg-white/5 rounded-xl border border-white/10 hover:bg-white/10 transition-all';
-                item.innerHTML = `
-                    <div class="flex items-center gap-3">
-                        <div class="w-8 h-8 rounded-full bg-gradient-to-br from-yellow-400 to-orange-500 flex items-center justify-center text-slate-900 font-bold text-xs">
-                            ${index + 1}
-                        </div>
-                        <div>
-                            <div class="font-semibold text-white">${winner.name}</div>
-                            <div class="text-xs text-gray-400">${winner.timestamp}</div>
-                        </div>
-                    </div>
-                    <button onclick="removeWinner(${winner.id})" class="text-red-400 hover:text-red-300 p-2">
-                        ×
-                    </button>
-                `;
-                history.appendChild(item);
-            });
-        }
+<button onclick="spinWheel()">ސްޕިން</button>
 
-        function updateDisplay() {
-            const list = document.getElementById('participantsList');
-            let filtered = participants;
-            
-            if (currentFilter === 'remaining') filtered = participants.filter(p => p.status === 'remaining');
-            if (currentFilter === 'winners') filtered = participants.filter(p => p.status === 'winner' || p.status === 'eliminated');
-            
-            if (filtered.length === 0) {
-                list.innerHTML = '<div class="col-span-full text-center py-8 text-gray-500 text-sm">No participants to display</div>';
-                return;
-            }
-            
-            list.innerHTML = '';
-            filtered.forEach(p => {
-                const el = document.createElement('div');
-                let statusClass = 'border-white/10 bg-white/5';
-                let statusIcon = '○';
-                
-                if (p.status === 'winner' || p.status === 'eliminated') {
-                    statusClass = 'border-yellow-400/30 bg-yellow-400/10';
-                    statusIcon = '👑';
-                }
-                
-                el.className = `flex items-center justify-between p-3 rounded-lg border ${statusClass} transition-all hover:scale-105`;
-                el.innerHTML = `
-                    <span class="font-medium text-sm truncate flex-1">${p.name}</span>
-                    <span class="text-xs">${statusIcon}</span>
-                `;
-                list.appendChild(el);
-            });
-        }
+</div>
 
-        function filterList(type) {
-            currentFilter = type;
-            
-            // Update buttons
-            document.querySelectorAll('[data-filter]').forEach(btn => {
-                if (btn.dataset.filter === type) {
-                    btn.classList.add('bg-yellow-400/20', 'text-yellow-400', 'border-yellow-400/30');
-                    btn.classList.remove('bg-white/10');
-                } else {
-                    btn.classList.remove('bg-yellow-400/20', 'text-yellow-400', 'border-yellow-400/30');
-                    btn.classList.add('bg-white/10');
-                }
-            });
-            
-            updateDisplay();
-        }
+<div class="card">
 
-        function resetAll() {
-            if (!confirm('Are you sure you want to reset everything? All data will be lost.')) return;
-            
-            participants = [];
-            winners = [];
-            eliminated = [];
-            isSpinning = false;
-            currentFilter = 'all';
-            
-            document.getElementById('winnerName').textContent = '???';
-            document.getElementById('winnerName').classList.remove('glow-winner', 'text-yellow-400');
-            document.getElementById('statusText').textContent = 'Ready to Select';
-            document.getElementById('winnerInfo').style.opacity = '0';
-            document.getElementById('winnersHistory').innerHTML = '<div class="text-center py-4 text-gray-500 text-sm italic">No winners selected yet</div>';
-            document.getElementById('fileInput').value = '';
-            
-            updateDisplay();
-            updateStats();
-            showNotification('All data reset');
-        }
+<h3><i class="fa-solid fa-trophy"></i> ވިނަރސް</h3>
 
-        function showNotification(message, type = 'success') {
-            const notif = document.createElement('div');
-            const colors = type === 'error' ? 'bg-red-500/20 text-red-400 border-red-500/30' : 'bg-green-500/20 text-green-400 border-green-500/30';
-            
-            notif.className = `fixed bottom-4 right-4 px-6 py-3 rounded-xl border ${colors} backdrop-blur-lg transform translate-y-20 opacity-0 transition-all duration-300 z-50`;
-            notif.textContent = message;
-            
-            document.body.appendChild(notif);
-            
-            setTimeout(() => {
-                notif.classList.remove('translate-y-20', 'opacity-0');
-            }, 100);
-            
-            setTimeout(() => {
-                notif.classList.add('translate-y-20', 'opacity-0');
-                setTimeout(() => notif.remove(), 300);
-            }, 3000);
-        }
+<div id="winners"></div>
 
-        // Drag and drop support
-        document.addEventListener('dragover', (e) => {
-            e.preventDefault();
-        });
+<button onclick="exportCSV()">
+<i class="fa-solid fa-download"></i>
+CSV
+</button>
 
-        document.addEventListener('drop', (e) => {
-            e.preventDefault();
-            const files = e.dataTransfer.files;
-            if (files.length > 0) {
-                const event = { target: { files: files } };
-                handleFileUpload(event);
-            }
-        });
-    </script>
+</div>
+
+</div>
+
+<script>
+
+let participants=[];
+let winners=[];
+let wheel;
+
+function save(){
+localStorage.setItem("participants",JSON.stringify(participants));
+}
+
+function load(){
+
+let p=localStorage.getItem("participants");
+
+if(p){
+participants=JSON.parse(p);
+}
+
+render();
+buildWheel();
+
+}
+
+function render(){
+
+let div=document.getElementById("participants");
+
+div.innerHTML="";
+
+participants.forEach(p=>{
+
+let d=document.createElement("div");
+d.className="participant";
+d.innerText=p;
+
+div.appendChild(d);
+
+});
+
+}
+
+function addManual(){
+
+let text=document.getElementById("manual").value;
+
+let names=text.split(/[\n,]+/);
+
+names.forEach(n=>{
+if(n.trim())participants.push(n.trim());
+});
+
+save();
+render();
+buildWheel();
+
+}
+
+document.getElementById("fileInput").addEventListener("change",function(e){
+
+let file=e.target.files[0];
+
+let reader=new FileReader();
+
+reader.onload=function(evt){
+
+let data=evt.target.result;
+
+if(file.name.endsWith(".csv")){
+
+let names=data.split(/[\n,]+/);
+
+names.forEach(n=>participants.push(n));
+
+}
+
+else{
+
+let workbook=XLSX.read(data,{type:'binary'});
+
+let sheet=workbook.Sheets[workbook.SheetNames[0]];
+
+let rows=XLSX.utils.sheet_to_json(sheet,{header:1});
+
+rows.forEach(r=>{
+if(r[0])participants.push(r[0]);
+});
+
+}
+
+save();
+render();
+buildWheel();
+
+};
+
+reader.readAsBinaryString(file);
+
+});
+
+function buildWheel(){
+
+let segments=participants.map(p=>({text:p}));
+
+wheel=new Winwheel({
+
+canvasId:'wheelCanvas',
+numSegments:segments.length,
+segments:segments
+
+});
+
+}
+
+function spinWheel(){
+
+wheel.startAnimation();
+
+let index=Math.floor(Math.random()*participants.length);
+
+let winner=participants[index];
+
+winners.push(winner);
+
+let div=document.getElementById("winners");
+
+let d=document.createElement("div");
+d.innerText=winner;
+
+div.appendChild(d);
+
+}
+
+function exportCSV(){
+
+let csv="Winner\n";
+
+winners.forEach(w=>{
+csv+=w+"\n";
+});
+
+let blob=new Blob([csv]);
+
+let a=document.createElement("a");
+
+a.href=URL.createObjectURL(blob);
+
+a.download="winners.csv";
+
+a.click();
+
+}
+
+function searchParticipants(){
+
+let q=document.getElementById("search").value.toLowerCase();
+
+let div=document.getElementById("participants");
+
+div.innerHTML="";
+
+participants.filter(p=>p.toLowerCase().includes(q)).forEach(p=>{
+
+let d=document.createElement("div");
+d.className="participant";
+d.innerText=p;
+
+div.appendChild(d);
+
+});
+
+}
+
+function toggleTheme(){
+
+document.body.classList.toggle("light");
+
+}
+
+function adminLogin(){
+
+let pass=prompt("Admin Password");
+
+if(pass==="admin123"){
+
+alert("Admin Mode");
+
+}
+
+}
+
+document.getElementById("logoUpload").addEventListener("change",function(e){
+
+let file=e.target.files[0];
+
+let reader=new FileReader();
+
+reader.onload=function(){
+
+document.getElementById("logo").src=reader.result;
+
+localStorage.setItem("logo",reader.result);
+
+};
+
+reader.readAsDataURL(file);
+
+});
+
+let savedLogo=localStorage.getItem("logo");
+
+if(savedLogo){
+document.getElementById("logo").src=savedLogo;
+}
+
+load();
+
+</script>
+
 </body>
 </html>
